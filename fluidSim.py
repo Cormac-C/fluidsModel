@@ -13,7 +13,7 @@ gravity = 9.81
 kinVisWater = 9.0e-7
 # print("kinVisWater", kinVisWater)
 
-def findLosses (length, velocity):
+def findLosses (length, velocity, height):
     if velocity == 0:
         velocity = 0.01
     # Laminar Friction Factor using 64/Re
@@ -21,12 +21,16 @@ def findLosses (length, velocity):
     # Transition / Turbulent Friction factor from Moody diagram
     tFrictionFactor = 0.02
     # This is a guess
-    distanceLaminar = 0.25 + (length - 0.3)*0.3
+    distanceLaminar = 0.2 + (length - 0.2)*0.4
     percentLaminar = distanceLaminar / length
     effectiveFrictionFactor = percentLaminar * lFrictionFactor + (1 - percentLaminar) * tFrictionFactor
     frictionLoss = effectiveFrictionFactor * (length * velocity ** 2) / (pipeDiameter * 2 * gravity)
     # Need to add in Minor Losses
-    return frictionLoss
+    # Calculate Minor Losses For Contraction and Expansion
+    # The 0.1 is just to make things work. Now physics based
+    contractionFactor = 0.1 * 0.42 * (1 - (pipeDiameter ** 2) / (height ** 2))
+    contractionLoss = contractionFactor * (velocity ** 2) / (2 * gravity)
+    return frictionLoss + contractionLoss 
 
 def simulateDrain (vInitial, length, timeStep):
     # Initial Conditions
@@ -39,7 +43,7 @@ def simulateDrain (vInitial, length, timeStep):
     while volume >= 0:
         height = volume / tankArea + 0.02 + length / 150
         # Calculates losses based on the velocity of the last time step
-        losses = findLosses(length, velocity)
+        losses = findLosses(length, velocity, height)
         velocity = math.sqrt(2 * gravity * (height - losses))
         velocities.append(velocity)
         flowRate = pipeArea * velocity
