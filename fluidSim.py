@@ -9,11 +9,22 @@ tankArea = 0.32 * 0.36
 pipeDiameter = 0.00794
 pipeArea = math.pi / 4 * pipeDiameter ** 2
 gravity = 9.81
+# Kinematic viscosity of water at 1atm, ~25C from textbook p. 809
+kinVisWater = 9.0e-7
+# print("kinVisWater", kinVisWater)
 
 def findLosses (length, velocity):
-    # Friction factor wrong
-    frictionFactor = 0.01
-    frictionLoss = frictionFactor * (length * velocity ** 2) / (pipeDiameter * 2 * gravity)
+    if velocity == 0:
+        velocity = 0.01
+    # Laminar Friction Factor using 64/Re
+    lFrictionFactor = (64 * kinVisWater) / (velocity * pipeDiameter)
+    # Transition / Turbulent Friction factor from Moody diagram
+    tFrictionFactor = 0.02
+    # This is a guess
+    distanceLaminar = 0.25 + (length - 0.3)*0.3
+    percentLaminar = distanceLaminar / length
+    effectiveFrictionFactor = percentLaminar * lFrictionFactor + (1 - percentLaminar) * tFrictionFactor
+    frictionLoss = effectiveFrictionFactor * (length * velocity ** 2) / (pipeDiameter * 2 * gravity)
     # Need to add in Minor Losses
     return frictionLoss
 
