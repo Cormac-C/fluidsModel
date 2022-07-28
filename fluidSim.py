@@ -21,51 +21,53 @@ def findLosses (length, velocity, height):
     # Transition / Turbulent Friction factor from Moody diagram
     tFrictionFactor = 0.02
     # This is a guess
-    distanceLaminar = 0.2 + (length - 0.2)*0.4
+    distanceLaminar = 0.25 + (length - 0.3)*0.3
     percentLaminar = distanceLaminar / length
     effectiveFrictionFactor = percentLaminar * lFrictionFactor + (1 - percentLaminar) * tFrictionFactor
     frictionLoss = effectiveFrictionFactor * (length * velocity ** 2) / (pipeDiameter * 2 * gravity)
-    # Need to add in Minor Losses
+    
     # Calculate Minor Losses For Contraction and Expansion
-    # The 0.1 is just to make things work. Now physics based
-    contractionFactor = 0.1 * 0.42 * (1 - (pipeDiameter ** 2) / (height ** 2))
+    contractionFactor = 0.21 * 0.42 * (1 - (pipeDiameter ** 2) / (height ** 2))
+
     contractionLoss = contractionFactor * (velocity ** 2) / (2 * gravity)
-    return frictionLoss + contractionLoss 
+
+    #to do: add tee joint friction and minor losses
+    #if (tJoint):
+
+    losses = frictionLoss + contractionLoss
+
+    return losses
+
 
 def simulateDrain (vInitial, length, timeStep):
     # Initial Conditions
     volume = vInitial
     time = 0
     velocity = 0
-    volumes = []
-    velocities = []
-    times = []
     while volume >= 0:
         height = volume / tankArea + 0.02 + length / 150
         # Calculates losses based on the velocity of the last time step
         losses = findLosses(length, velocity, height)
         velocity = math.sqrt(2 * gravity * (height - losses))
-        velocities.append(velocity)
         flowRate = pipeArea * velocity
         volume -= timeStep * flowRate
-        volumes.append(volume)
-        times.append(time)
         time += timeStep
     print("Model Done (Length ", length, "), Tank Drained in ", round(time, 3), "s", datetime.timedelta(seconds = time))
-    fig, ax = plt.subplots()
-    ax.scatter(times, volumes)
-    ax.set_xlabel("time (s)", fontsize=15)
-    ax.set_ylabel("volume ($m^3$)", fontsize=15)
-    ax.grid(True)
-    fig.tight_layout()
-    plt.show()
-    fig2, ax2 = plt.subplots()
-    ax2.scatter(times, velocities)
-    ax2.set_xlabel("time (s)", fontsize=15)
-    ax2.set_ylabel("velocity (m/s)", fontsize=15)
-    ax2.grid(True)
-    fig2.tight_layout()
-    plt.show()
+
+
+def simulateSimpleDrain(vInitial, length):
+    # Initial conditions
+    volume = vInitial
+    time = 0
+    velocity = 0
+
+    height = volume / tankArea + 0.02 + length / 150
+    velocity = math.sqrt(2 * gravity * height)
+    flowRate = pipeArea * velocity
+    time = volume / flowRate
+    print("Simple Model Done (Length ", length, "), Tank Drained in ", round(time, 3), "s", datetime.timedelta(seconds = time))
+
+
 
 v1 = 0.36 * 0.32 * 0.08
 # Pipe lengths: 0.2, 0.3, 0.4, 0.6
@@ -73,3 +75,7 @@ simulateDrain(v1, 0.2, 0.1)
 simulateDrain(v1, 0.3, 0.1)
 simulateDrain(v1, 0.4, 0.1)
 simulateDrain(v1, 0.6, 0.1)
+simulateSimpleDrain(v1, 0.2)
+simulateSimpleDrain(v1, 0.3)
+simulateSimpleDrain(v1, 0.4)
+simulateSimpleDrain(v1, 0.6)
