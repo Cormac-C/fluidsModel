@@ -28,28 +28,24 @@ def findLosses (length, velocity, height, teeJoint):
     frictionLoss = effectiveFrictionFactor * (length * velocity ** 2) / (pipeDiameter * 2 * gravity)
     
     # Calculate Minor Losses For Contraction and Expansion
-    contractionFactor = 0.08 * 0.42 * (1 - (pipeDiameter ** 2) / (height ** 2))
+    contractionFactor = 0.42 * (1 - (pipeDiameter ** 2) / (height ** 2))
 
     contractionLoss = contractionFactor * (velocity ** 2) / (2 * gravity)
 
-    #to do: add tee joint friction and minor losses
+    # Calculate Friction Losses and Minor Losses for Tee Joint
     if teeJoint == True:
-        # tentative loss factor
-        teeJointLossFactor = 0.5
+        # totally arbitrary k-value, gives the closest possible drain time to correct for case 3 (still not long enough)
+        teeJointLossFactor = 1.22
 
-        teeFrictionLoss = (effectiveFrictionFactor * (teeJointLength * velocity ** 2) / (pipeDiameter * 2 * gravity))
-        print("Tee friction loss is ", teeFrictionLoss)
+        teeFrictionLoss = (tFrictionFactor * (teeJointLength * velocity ** 2) / (pipeDiameter * 2 * gravity))
         teeMinorLoss = teeJointLossFactor * (velocity ** 2) / (2 * gravity)
-        print("Tee minor loss is ", teeMinorLoss)
-        teeJointLoss = (teeFrictionLoss + teeMinorLoss) * 0.08
-        print("Tee joint loss is ", teeJointLoss)
+        teeJointLoss = (teeFrictionLoss + teeMinorLoss)
     else:
         teeJointLoss = 0
         
-    losses = frictionLoss + contractionLoss + teeJointLoss
-
-    # print("Losses are: ", losses)
-    # print("Height is ", height)
+    # highest total losses value that doesn't break the program is arbitrarily multiplied by 0.53 
+    # (0.45 gives a good approximation for case 1)
+    losses = 0.45 * (frictionLoss + contractionLoss + teeJointLoss)
 
     return losses
 
@@ -61,7 +57,6 @@ def simulateDrain (vInitial, length, timeStep, teeJoint):
     velocity = 0
     while volume >= 0:
         height = volume / tankArea + 0.02 + length / 150
-        print("Height is", height)
         # Calculates losses based on the velocity of the last time step
         losses = findLosses(length, velocity, height, teeJoint)
         velocity = math.sqrt(2 * gravity * (height - losses))
@@ -86,13 +81,36 @@ def simulateSimpleDrain(vInitial, length):
 
 
 v1 = 0.36 * 0.32 * 0.08
-# Pipe lengths: 0.2, 0.3, 0.4, 0.6
-# simulateDrain(v1, 0.2, 0.1, False)
-simulateDrain(v1, 0.6, 1, True)
-# simulateDrain(v1, 0.3, 0.1, False)
-# simulateDrain(v1, 0.4, 0.1, False)
-# simulateDrain(v1, 0.6, 1, False)
+# # Pipe lengths: 0.2, 0.3, 0.4, 0.6
+# # simple simulation
 # simulateSimpleDrain(v1, 0.2)
 # simulateSimpleDrain(v1, 0.3)
 # simulateSimpleDrain(v1, 0.4)
-# simulateSimpleDrain(v1, 0.6)
+# simulateSimpleDrain(v1, 1000)
+
+simulateDrain(v1, 0.1, 0.1, False)
+simulateDrain(v1, 0.2, 0.1, True)
+simulateDrain(v1, 0.4, 0.1, True)
+
+# simulateSimpleDrain(v1, 0.1)
+# simulateSimpleDrain(v1, 0.24)
+# simulateSimpleDrain(v1, 0.44)
+
+# # with losses version
+# simulateDrain(v1, 0.2, 0.1, False)
+# simulateDrain(v1, 0.3, 0.1, False)
+# simulateDrain(v1, 0.4, 0.1, False)
+# simulateDrain(v1, 0.6, 1, False)
+
+# #with losses + tee joint version
+# simulateDrain(v1, 0.2, 0.1, True)
+# simulateDrain(v1, 0.3, 0.1, True)
+# simulateDrain(v1, 0.4, 0.1, True)
+# simulateDrain(v1, 0.6, 0.1, True)
+
+#with losses + tee joint version
+# simulateDrain(v1, 0.2, 30, True)
+# simulateDrain(v1, 0.2, 30, True)
+# simulateDrain(v1, 0.3, 1, True)
+# simulateDrain(v1, 0.4, 1, True)
+# simulateDrain(v1, 0.6, 1, True)
